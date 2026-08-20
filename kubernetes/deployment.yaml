@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voyage-analytics-api
+  namespace: voyage-analytics
+  labels:
+    app: voyage-analytics-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: voyage-analytics-api
+  template:
+    metadata:
+      labels:
+        app: voyage-analytics-api
+    spec:
+      containers:
+      - name: api
+        image: voyage-analytics-api:latest
+        ports:
+        - containerPort: 5000
+        envFrom:
+        - configMapRef:
+            name: voyage-analytics-config
+        volumeMounts:
+        - name: model-volume
+          mountPath: /app/artifacts
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: model-volume
+        configMap:
+          name: voyage-analytics-model
+          items:
+          - key: flight_price_pipeline.joblib
+            path: flight_price_pipeline.joblib

@@ -1,0 +1,16 @@
+# Development dependencies
+-r requirements.txt
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+
+# Linting
+flake8==7.0.0
+black==23.11.0
+
+# Type checking
+mypy==1.6.1
+
+# Development server
+werkzeug==3.0.1

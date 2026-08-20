@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: voyage-analytics-config
+  namespace: voyage-analytics
+data:
+  MODEL_PATH: "artifacts/flight_price_pipeline.joblib"
+  MLFLOW_TRACKING_URI: "http://mlflow-service:5000"
+  MLFLOW_EXPERIMENT_NAME: "voyage-flight-price"
+  API_HOST: "0.0.0.0"
+  API_PORT: "5000"
