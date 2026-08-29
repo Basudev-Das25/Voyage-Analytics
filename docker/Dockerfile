@@ -12,8 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Upgrade pip and install Python dependencies
+RUN python -m pip install --upgrade pip setuptools wheel && \
+    python -m pip install --no-cache-dir --disable-pip-version-check -r requirements.txt
 
 # Copy application code
 COPY src/ src/
@@ -28,7 +29,7 @@ COPY artifacts/ artifacts/
 
 # Copy documentation
 COPY README.md .
-COPY mlflow/README.md mlflow/
+COPY mlflow_tracking/README.md mlflow_tracking/
 
 # Expose API port
 EXPOSE 5000
