@@ -1,13 +1,22 @@
 {
-  "model_name": "voyage_gender",
+  "model_name": "voyage_flight_price",
   "model_version": "1.0",
-  "algorithm": "RandomForestClassifier",
-  "framework": "scikit-learn",
-  "task": "classification",
-  "data_path": "artifacts/data/users.csv",
-  "classes": [
-    "female",
-    "male",
-    "none"
-  ]
+  "algorithm": "XGBRegressor",
+  "framework": "xgboost",
+  "task": "regression",
+  "features": [
+    "from",
+    "to",
+    "flightType",
+    "time",
+    "distance",
+    "agency",
+    "flight_year",
+    "flight_month",
+    "flight_day",
+    "flight_dayofweek"
+  ],
+  "n_estimators": 300,
+  "learning_rate": 0.05,
+  "max_depth": 6
 }
