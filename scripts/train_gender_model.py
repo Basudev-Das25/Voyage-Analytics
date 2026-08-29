@@ -51,8 +51,7 @@ def main():
     parser = argparse.ArgumentParser(description="Train the gender classification model")
     parser.add_argument(
         "--data-path",
-        default="C:/Basudev Das/Work/labmerix/20-08-26/"
-        "drive-download-20260820T061619Z-1-001/travel_capstone dataset/users.csv",
+        default="artifacts/data/users.csv",
         help="Path to users.csv",
     )
     parser.add_argument(

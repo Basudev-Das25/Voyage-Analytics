@@ -24,8 +24,8 @@ import streamlit as st
 # Configuration
 # --------------------------------------------------------------------------- #
 API_BASE = os.getenv("API_BASE_URL", "http://localhost:5000").rstrip("/")
-HOTELS_PATH = os.getenv("HOTELS_DATA_PATH", "artifacts/hotels.csv")
-USERS_PATH = os.getenv("USERS_DATA_PATH", "artifacts/users.csv")
+HOTELS_PATH = os.getenv("HOTELS_DATA_PATH", "artifacts/data/hotels.csv")
+USERS_PATH = os.getenv("USERS_DATA_PATH", "artifacts/data/users.csv")
 CATALOG_PATH = os.getenv("HOTELS_CATALOG_PATH", "artifacts/hotel_catalog.json")
 
 st.set_page_config(page_title="Voyage Analytics", layout="wide")
@@ -235,7 +235,7 @@ else:
     else:
         st.info(
             "Rich local EDA requires the datasets. Set HOTELS_DATA_PATH and "
-            "USERS_DATA_PATH (or place hotels.csv/users.csv under artifacts/)."
+            "USERS_DATA_PATH (or place hotels.csv/users.csv under artifacts/data/)."
         )
         # Fall back to the tracked catalog for a minimal overview.
         import json

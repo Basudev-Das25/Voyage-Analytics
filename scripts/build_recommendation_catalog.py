@@ -30,16 +30,10 @@ import pandas as pd
 def main():
     parser = argparse.ArgumentParser(description="Build the recommendation catalog")
     parser.add_argument(
-        "--hotels",
-        default="C:/Basudev Das/Work/labmerix/20-08-26/"
-        "drive-download-20260820T061619Z-1-001/travel_capstone dataset/hotels.csv",
-        help="Path to hotels.csv",
+        "--hotels", default="artifacts/data/hotels.csv", help="Path to hotels.csv"
     )
     parser.add_argument(
-        "--users",
-        default="C:/Basudev Das/Work/labmerix/20-08-26/"
-        "drive-download-20260820T061619Z-1-001/travel_capstone dataset/users.csv",
-        help="Path to users.csv",
+        "--users", default="artifacts/data/users.csv", help="Path to users.csv"
     )
     parser.add_argument(
         "--output", default="artifacts/hotel_catalog.json", help="Output JSON path"

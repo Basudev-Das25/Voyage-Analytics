@@ -111,17 +111,18 @@ classifier, hotel recommender, and data insights.
 
 ## Building the Artifacts
 
-The gender model and recommendation catalog are tracked in the repo. To
-regenerate them from the raw datasets:
+The gender model and recommendation catalog are tracked in the repo. The raw
+datasets (`flights.csv`, `hotels.csv`, `users.csv`) live in `artifacts/data/`.
+To regenerate the artifacts from these datasets:
 
 ```bash
 # Train the gender classification model from users.csv
-python scripts/train_gender_model.py --data-path "<dataset>/users.csv"
+python scripts/train_gender_model.py --data-path artifacts/data/users.csv
 
 # Build the hotel recommendation catalog from hotels.csv + users.csv
 python scripts/build_recommendation_catalog.py \
-    --hotels "<dataset>/hotels.csv" \
-    --users "<dataset>/users.csv"
+    --hotels artifacts/data/hotels.csv \
+    --users artifacts/data/users.csv
 ```
 
 The flight-price model (`artifacts/flight_price_pipeline.joblib`) is supplied

@@ -23,10 +23,10 @@ class Settings:
 
         # Recommendation engine data
         self.hotels_data_path: str = os.getenv(
-            "HOTELS_DATA_PATH", "artifacts/hotels.csv"
+            "HOTELS_DATA_PATH", "artifacts/data/hotels.csv"
         )
         self.users_data_path: str = os.getenv(
-            "USERS_DATA_PATH", "artifacts/users.csv"
+            "USERS_DATA_PATH", "artifacts/data/users.csv"
         )
         self.hotels_catalog_path: str = os.getenv(
             "HOTELS_CATALOG_PATH", "artifacts/hotel_catalog.json"
