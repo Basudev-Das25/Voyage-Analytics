@@ -1,202 +1,215 @@
-# Voyage Analytics: MLOps Production Layer
+# Voyage Analytics
 
-Voyage Analytics integrates MLOps in travel by productionizing ML systems for
-flight price prediction, gender classification, and hotel recommendation.
+**Integrating MLOps in Travel — Flight Price · Gender · Hotel Recommendation**
 
-## Overview
+Voyage Analytics is an MLOps capstone that productionizes three ML services for
+a travel platform. It trains models from the `flights.csv`, `hotels.csv` and
+`users.csv` datasets, exposes them through a single Flask REST API, tracks them
+with MLflow, and ships them via Docker and Kubernetes — all fronted by an
+interactive Streamlit dashboard.
 
-This repository contains the production/MLOps layer for Voyage Analytics. It
-consumes model artifacts built from the ML team's Colab notebook and exposes
-them via a Flask REST API for integration with downstream systems (including
-the Streamlit dashboard).
+---
 
-### Models
+## Features
 
-| Model | Source dataset | Artifact | Task | Endpoint |
-|-------|----------------|----------|------|----------|
-| Flight price | `flights.csv` (+ users/hotels) | `artifacts/flight_price_pipeline.joblib` | Regression (XGBoost) | `POST /api/predict` |
-| Gender | `users.csv` | `artifacts/gender_model.joblib` | Classification (RandomForest) | `POST /api/gender/predict` |
-| Hotel recommendation | `hotels.csv` + `users.csv` | `artifacts/hotel_catalog.json` | Content-based filtering | `POST /api/recommend/recommendations` |
+- **Flight price prediction** — XGBoost regression (route, class, agency, date).
+- **Gender classification** — RandomForest classifier trained on `users.csv`.
+- **Hotel recommendation** — content-based engine over the real hotel catalog.
+- **Streamlit dashboard** — interactive predictor, classifier, recommender and
+  data insights.
+- **MLflow tracking & registry** — metrics, params, artifacts and model
+  registration.
+- **Docker & Kubernetes** — portable, scalable deployment.
+- **Automated tests** — 30+ tests, ~85% coverage.
 
-### Architecture
+## Architecture
 
 ```
-Google Colab (ML Team)
-         │
-         ▼
-  Model Artifacts (joblib / json)
-         │
-         ▼
-    MLflow (Tracking / Registry)
-         │
-         ▼
-   Flask REST API  ◄── Streamlit Dashboard
-         │
-    ┌────┴────┐
-    ▼         ▼
-  Docker   Kubernetes
+Google Colab (training)
+        │
+        ▼
+ Model Artifacts  (joblib / json)
+        │
+        ▼
+   MLflow  (tracking / registry)
+        │
+        ▼
+ Flask REST API  ◄── Streamlit Dashboard
+        │
+   ┌────┴────┐
+   ▼         ▼
+ Docker   Kubernetes
 ```
 
-## Division of Responsibilities
+## Project Structure
 
-| Component | Owner |
-|-----------|-------|
-| Flight price regression / gender / recommendation models | ML Team |
-| Data preprocessing & feature engineering | ML Team |
-| Model comparison/evaluation | ML Team |
-| Model training (Colab) | ML Team |
-| **Model artifact integration** | **MLOps Team** |
-| **Flask REST API** | **MLOps Team** |
-| **Automated testing** | **MLOps Team** |
-| **Streamlit dashboard** | **MLOps Team** |
-| **Docker** | **MLOps Team** |
-| **Kubernetes** | **MLOps Team** |
-| **CI/CD** | **MLOps Team** |
+```
+voyage-analytics/
+├── api/                 # Flask blueprints + endpoint docs
+├── artifacts/           # Model artifacts, catalog & datasets (data/)
+├── config/              # Settings (README.md)
+├── src/
+│   ├── features/        # Shared feature engineering
+│   ├── model/           # Model loaders (README.md)
+│   ├── schemas/         # Pydantic schemas (README.md)
+│   └── services/        # Business logic
+├── scripts/             # Training / catalog / tracking scripts (README.md)
+├── dashboard/           # Streamlit web app (README.md)
+├── tests/               # Test suite
+├── mlflow_tracking/     # MLflow integration (README.md)
+├── docker/              # Dockerfile + MLflow compose (README.md)
+├── kubernetes/          # K8s manifests (README.md)
+├── airflow/             # Orchestration DAG template (README.md)
+└── notebook/            # Training notebook (README.md)
+```
+
+> A list of known issues / open requirements lives in [`Update.md`](./Update.md).
+
+---
 
 ## Quick Start
 
-### Prerequisites
+### 1. Prerequisites
 
-- Python 3.9+
-- pip
+- Python 3.9+ (tested on 3.13)
+- `pip`
+- Docker (optional — for MLflow server / container deployment)
+- `kubectl` (optional — for Kubernetes)
 
-### Local Setup
+### 2. Install
 
 ```bash
-# Create virtual environment
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Copy environment template
-cp .env.example .env
+pip install -r requirements.txt    # runtime
+pip install -r requirements-dev.txt # tests + MLflow (optional)
 ```
 
-### Running the API
+### 3. Configure
 
 ```bash
-python -m api.app                 # or: python scripts/run_local.py
+cp .env.example .env
+# Edit as needed — defaults work for local development.
 ```
 
-The API exposes the following endpoints (see `docs/api.md`):
+### 4. Run the API
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Health check |
-| GET | `/api/model-info` | Flight-price model metadata |
-| POST | `/api/predict` | Predict flight price |
-| GET | `/api/gender/health` | Gender endpoint health |
-| POST | `/api/gender/predict` | Classify user gender |
-| GET | `/api/recommend/health` | Recommendation endpoint health |
-| GET | `/api/recommend/places` | List destination cities |
-| POST | `/api/recommend/recommendations` | Get hotel recommendations |
+```bash
+python -m api.app                  # or: python scripts/run_local.py
+```
 
-### Running Tests
+The API is served at `http://localhost:5000`.
+
+### 5. Run the tests
 
 ```bash
 pytest
 ```
 
-### Streamlit Dashboard
+### 6. Run the Streamlit dashboard
 
 ```bash
-# With the API running, launch the dashboard:
+# With the API running (step 4), in a second terminal:
 streamlit run dashboard/app.py
 ```
 
-The dashboard provides an interactive flight-price predictor, gender
-classifier, hotel recommender, and data insights.
+---
 
-## Building the Artifacts
+## API Endpoints
 
-The gender model and recommendation catalog are tracked in the repo. The raw
-datasets (`flights.csv`, `hotels.csv`, `users.csv`) live in `artifacts/data/`.
-To regenerate the artifacts from these datasets:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET  | `/api/health`                       | Health check |
+| GET  | `/api/model-info`                   | Flight-price model metadata |
+| POST | `/api/predict`                      | Predict flight price |
+| GET  | `/api/gender/health`                | Gender endpoint health |
+| POST | `/api/gender/predict`               | Classify a user's gender |
+| GET  | `/api/recommend/health`             | Recommendation endpoint health |
+| GET  | `/api/recommend/places`             | List destination cities |
+| POST | `/api/recommend/recommendations`    | Get hotel recommendations |
+
+Request/response schemas: see [`api/README.md`](./api/README.md).
+
+---
+
+## Key Commands
+
+### Build model artifacts
 
 ```bash
-# Train the gender classification model from users.csv
-python scripts/train_gender_model.py --data-path artifacts/data/users.csv
+# Gender classifier (from the bundled users.csv)
+python scripts/train_gender_model.py
 
-# Build the hotel recommendation catalog from hotels.csv + users.csv
-python scripts/build_recommendation_catalog.py \
-    --hotels artifacts/data/hotels.csv \
-    --users artifacts/data/users.csv
+# Hotel recommendation catalog (from bundled hotels.csv + users.csv)
+python scripts/build_recommendation_catalog.py
 ```
 
-The flight-price model (`artifacts/flight_price_pipeline.joblib`) is supplied
-by the ML team from the Colab notebook and is git-ignored (large binary). Place
-it at `MODEL_PATH` (default `artifacts/flight_price_pipeline.joblib`).
+Training scripts write `metrics.json` and `model_metadata.json` for MLflow.
 
-## MLflow Tracking
-
-Track, log and register all models with MLflow. Start the bundled tracking
-server (port 5001) with Docker:
+### MLflow tracking & registry
 
 ```bash
+# Start the tracking server (port 5001 — avoids API port 5000)
 docker compose -f docker/docker-compose.mlflow.yml up -d
 export MLFLOW_TRACKING_URI=http://localhost:5001
-```
 
-Install the tracking dependency and run:
-
-```bash
-pip install -r requirements-dev.txt
+# Log metrics, params, artifacts + register all models
 python scripts/track_models.py
 ```
 
-See `mlflow_tracking/README.md` for details.
+See [`mlflow_tracking/README.md`](./mlflow_tracking/README.md).
 
-## Docker
+### Docker
 
 ```bash
 docker build -f docker/Dockerfile -t voyage-analytics-api .
 docker run -p 5000:5000 voyage-analytics-api
 ```
 
-## Kubernetes
+See [`docker/README.md`](./docker/README.md).
+
+### Kubernetes
 
 ```bash
 kubectl apply -f kubernetes/
 ```
 
-See `kubernetes/README.md` for details.
+See [`kubernetes/README.md`](./kubernetes/README.md).
 
-## Project Structure
+---
 
-```
-voyage-analytics/
-├── api/                 # Flask blueprints (predict, gender, recommend)
-├── artifacts/           # Model artifacts + recommendation catalog
-├── config/              # Configuration
-├── src/
-│   ├── features/        # Shared feature engineering
-│   ├── model/           # Model loaders
-│   ├── schemas/         # Input/Output schemas
-│   └── services/        # Business logic
-├── scripts/             # Training / catalog / tracking / utility scripts
-├── dashboard/           # Streamlit web app
-├── tests/               # Test suite
-├── mlflow_tracking/     # MLflow integration (wraps official mlflow lib)
-├── docker/              # Docker configuration
-├── kubernetes/          # Kubernetes manifests
-├── airflow/             # Orchestration (template)
-├── docs/                # Documentation
-└── .github/workflows/   # CI/CD pipeline
-```
+## Models
+
+| Model | Dataset | Artifact | Task | Endpoint |
+|-------|---------|----------|------|----------|
+| Flight price | `flights.csv` | `artifacts/flight_price_pipeline.joblib` | Regression (XGBoost) | `POST /api/predict` |
+| Gender | `users.csv` | `artifacts/gender_model.joblib` | Classification | `POST /api/gender/predict` |
+| Hotel recommendation | `hotels.csv` + `users.csv` | `artifacts/hotel_catalog.json` | Content-based | `POST /api/recommend/recommendations` |
+
+> The flight-price model is supplied by the ML team and is git-ignored (large
+> binary). Place it at `MODEL_PATH` (`artifacts/flight_price_pipeline.joblib`).
+
+---
 
 ## Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MODEL_PATH` | `artifacts/flight_price_pipeline.joblib` | Flight-price model artifact |
-| `GENDER_MODEL_PATH` | `artifacts/gender_model.joblib` | Gender model artifact |
+| `MODEL_PATH` | `artifacts/flight_price_pipeline.joblib` | Flight-price model |
+| `GENDER_MODEL_PATH` | `artifacts/gender_model.joblib` | Gender model |
 | `HOTELS_CATALOG_PATH` | `artifacts/hotel_catalog.json` | Recommendation catalog |
+| `HOTELS_DATA_PATH` | `artifacts/data/hotels.csv` | Hotels dataset |
+| `USERS_DATA_PATH` | `artifacts/data/users.csv` | Users dataset |
 | `MLFLOW_TRACKING_URI` | `http://localhost:5000` | MLflow tracking URI |
-| `API_HOST` | `0.0.0.0` | API host |
+| `MLFLOW_EXPERIMENT_NAME` | `voyage-flight-price` | MLflow experiment |
+| `API_HOST` | `0.0.0.0` | API bind address |
 | `API_PORT` | `5000` | API port |
+
+Full reference: [`config/README.md`](./config/README.md).
+
+---
 
 ## License
 
-Academic project - Voyage Analytics Capstone
+Academic project — Voyage Analytics Capstone.
