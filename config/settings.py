@@ -16,6 +16,22 @@ class Settings:
             "MODEL_METADATA_PATH", "artifacts/model_metadata.json"
         )
 
+        # Gender classification model
+        self.gender_model_path: str = os.getenv(
+            "GENDER_MODEL_PATH", "artifacts/gender_model.joblib"
+        )
+
+        # Recommendation engine data
+        self.hotels_data_path: str = os.getenv(
+            "HOTELS_DATA_PATH", "artifacts/hotels.csv"
+        )
+        self.users_data_path: str = os.getenv(
+            "USERS_DATA_PATH", "artifacts/users.csv"
+        )
+        self.hotels_catalog_path: str = os.getenv(
+            "HOTELS_CATALOG_PATH", "artifacts/hotel_catalog.json"
+        )
+
         # MLflow settings
         self.mlflow_tracking_uri: str = os.getenv(
             "MLFLOW_TRACKING_URI", "http://localhost:5000"

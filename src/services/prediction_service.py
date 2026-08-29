@@ -3,9 +3,11 @@
 import logging
 from typing import Dict, Any, Optional
 
+import pandas as pd
+
 from src.model.loader import get_model
 from src.schemas.prediction import (
-    FlightPredictionInput,
+    FlightPredictionXgboostInput,
     FlightPredictionOutput,
     ModelInfo,
 )
@@ -20,7 +22,7 @@ class PredictionService:
     _model_info_cache: Optional[Dict[str, Any]] = None
 
     @classmethod
-    def predict(cls, input_data: FlightPredictionInput) -> float:
+    def predict(cls, input_data: FlightPredictionXgboostInput) -> float:
         """
         Generate a flight price prediction.
 
@@ -35,13 +37,14 @@ class PredictionService:
         """
         try:
             model = get_model()
-            # Convert input to dict for model prediction
-            input_dict = input_data.model_dump()
+            # Convert input to DataFrame for sklearn pipeline
+            input_dict = input_data.model_dump(by_alias=True)
+            df = pd.DataFrame([input_dict])
 
-            logger.debug(f"Running prediction with features: {list(input_dict.keys())}")
+            logger.debug(f"Running prediction with features: {list(df.columns)}")
+            logger.debug(f"Input data types: {df.dtypes.to_dict()}")
 
-            # The model pipeline expects input as a dict or DataFrame
-            prediction = model.predict([input_dict])
+            prediction = model.predict(df)
 
             # Extract scalar value from prediction array
             predicted_price = float(prediction[0])
@@ -51,7 +54,7 @@ class PredictionService:
             return predicted_price
 
         except Exception as e:
-            logger.error(f"Prediction failed: {e}")
+            logger.exception(f"Prediction failed")
             raise RuntimeError(f"Prediction failed: {e}") from e
 
     @classmethod

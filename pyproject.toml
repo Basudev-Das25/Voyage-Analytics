@@ -4,17 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "voyage-analytics"
-version = "1.0.0"
-description = "Production layer for Voyage Analytics flight price prediction"
+version = "2.0.0"
+description = "MLOps production layer for Voyage Analytics (flight price, gender, hotel recommendation)"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "flask>=3.0.0",
-    "joblib>=1.3.0",
+    "joblib>=1.4.0",
     "pydantic>=2.0.0",
+    "scikit-learn>=1.5.0",
+    "xgboost>=2.0.0",
+    "pandas>=2.0.0",
 ]
 
 [project.optional-dependencies]
+dashboard = [
+    "streamlit>=1.36.0",
+    "requests>=2.32.0",
+]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",

@@ -64,6 +64,9 @@ def test_load_model_file_not_found():
     original_path = config.settings.settings.model_path
     config.settings.settings.model_path = "/nonexistent/path/model.joblib"
 
+    # Ensure a previously cached model cannot mask the missing file.
+    ModelLoader.unload_model()
+
     try:
         with pytest.raises(FileNotFoundError):
             load_model()

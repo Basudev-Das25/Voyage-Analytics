@@ -4,6 +4,8 @@ from flask import Flask
 from logging.config import dictConfig
 
 from api.routes import register_routes
+from api.gender_routes import register_gender_routes
+from api.recommend_routes import register_recommend_routes
 
 
 def create_app() -> Flask:
@@ -14,24 +16,10 @@ def create_app() -> Flask:
         Configured Flask application instance.
     """
     # Configure logging
-    dictConfig(
-        {
-            "version": 1,
-            "formatters": {
-                "default": {
-                    "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
-                }
-            },
-            "handlers": {
-                "wsgi": {
-                    "class": "logging.StreamHandler",
-                    "stream": "ext://flask.logging.wsgi_exceptions_handler",
-                    "formatter": "default",
-                }
-            },
-            "root": {"level": "INFO", "handlers": ["wsgi"]},
-        }
-    )
+    # Simple logging configuration – avoid Flask-specific WSGI handler which may not exist in this environment
+    import logging
+    logging.basicConfig(level=logging.INFO,
+                        format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
 
     app = Flask(__name__)
 
@@ -40,6 +28,8 @@ def create_app() -> Flask:
 
     # Register routes
     register_routes(app)
+    register_gender_routes(app)
+    register_recommend_routes(app)
 
     return app
 

@@ -5,6 +5,16 @@ import os
 import logging
 from typing import Any, Optional
 
+# Compatibility shim for older sklearn pickles
+try:
+    from sklearn.compose import _column_transformer as ct
+    if not hasattr(ct, "_RemainderColsList"):
+        class _RemainderColsList(list):
+            pass
+        ct._RemainderColsList = _RemainderColsList
+except Exception:
+    pass
+
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -22,13 +32,6 @@ class ModelLoader:
 
         Returns the loaded model pipeline or raises an exception if loading fails.
         The model is cached after first load to avoid repeated file I/O.
-
-        Returns:
-            The loaded model pipeline object.
-
-        Raises:
-            FileNotFoundError: If the model artifact does not exist at the configured path.
-            RuntimeError: If model loading fails for other reasons.
         """
         if cls._model_instance is not None:
             logger.debug("Returning cached model")

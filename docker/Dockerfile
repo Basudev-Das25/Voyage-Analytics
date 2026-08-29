@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
@@ -6,6 +6,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -20,8 +21,10 @@ COPY api/ api/
 COPY config/ config/
 COPY scripts/ scripts/
 
-# Copy model artifact location (will be mounted at runtime)
-RUN mkdir -p artifacts
+# Copy model artifacts (baked into the image for portability).
+# Copies whatever artifacts are present so the build succeeds even when the
+# large, ML-team-supplied flight model is not checked into the repo.
+COPY artifacts/ artifacts/
 
 # Copy documentation
 COPY README.md .
@@ -36,6 +39,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 # Default environment variables (can be overridden at runtime)
 ENV MODEL_PATH=artifacts/flight_price_pipeline.joblib
+ENV GENDER_MODEL_PATH=artifacts/gender_model.joblib
+ENV HOTELS_CATALOG_PATH=artifacts/hotel_catalog.json
 ENV MLFLOW_TRACKING_URI=http://localhost:5000
 ENV API_HOST=0.0.0.0
 ENV API_PORT=5000

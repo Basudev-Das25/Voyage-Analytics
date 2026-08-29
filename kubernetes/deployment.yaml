@@ -23,10 +23,6 @@ spec:
         envFrom:
         - configMapRef:
             name: voyage-analytics-config
-        volumeMounts:
-        - name: model-volume
-          mountPath: /app/artifacts
-          readOnly: true
         livenessProbe:
           httpGet:
             path: /api/health
@@ -41,15 +37,8 @@ spec:
           periodSeconds: 5
         resources:
           requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
             memory: "256Mi"
-            cpu: "200m"
-      volumes:
-      - name: model-volume
-        configMap:
-          name: voyage-analytics-model
-          items:
-          - key: flight_price_pipeline.joblib
-            path: flight_price_pipeline.joblib
+            cpu: "150m"
+          limits:
+            memory: "512Mi"
+            cpu: "400m"

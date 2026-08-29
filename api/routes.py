@@ -6,7 +6,7 @@ from typing import Dict, Any
 from flask import Blueprint, jsonify, request, Response
 
 from src.schemas.prediction import (
-    FlightPredictionInput,
+    FlightPredictionXgboostInput,
     FlightPredictionOutput,
     HealthCheck,
     ModelInfo,
@@ -81,15 +81,20 @@ def predict() -> Response:
 
     # Validate input schema
     try:
-        input_data = FlightPredictionInput(**data)
+        input_data = FlightPredictionXgboostInput(**data)
     except Exception as e:
         logger.error(f"Validation error: {e}")
-        # Extract field name from error if possible
-        error_str = str(e)
-        if "field" in error_str.lower():
-            field = "unknown"
-        else:
-            field = None
+        # Extract the first offending field from a pydantic ValidationError
+        field = None
+        loc = getattr(e, "errors", None)
+        if callable(loc):
+            try:
+                errs = e.errors()
+                if errs and "loc" in errs[0] and errs[0]["loc"]:
+                    # loc may be a tuple ("from",); use last element
+                    field = str(errs[0]["loc"][-1])
+            except Exception:
+                field = None
         return error_response(
             message="Invalid input data",
             field=field,

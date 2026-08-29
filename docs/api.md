@@ -1,6 +1,10 @@
 # API Documentation
 
-## Endpoints
+The Voyage Analytics API is a Flask application exposing three ML services:
+**flight price prediction** (regression), **gender classification**, and
+**hotel recommendation** (content-based). All endpoints return JSON.
+
+## General Endpoints
 
 ### GET /api/health
 
@@ -8,20 +12,14 @@ Returns the health status of the API.
 
 **Response:**
 ```json
-{
-  "status": "healthy"
-}
+{ "status": "healthy" }
 ```
 
-**Status Codes:**
-- `200` - API is healthy
-- `503` - Model loading failed
-
----
+**Status Codes:** `200`, `503` (if model loading failed).
 
 ### GET /api/model-info
 
-Returns information about the loaded model.
+Returns metadata about the loaded flight-price model.
 
 **Response:**
 ```json
@@ -32,147 +30,181 @@ Returns information about the loaded model.
 }
 ```
 
-**Status Codes:**
-- `200` - Success
-- `503` - Model not available
-
 ---
+
+## Flight Price Prediction
 
 ### POST /api/predict
 
-Predicts flight price based on input features.
+Predicts flight price based on route, class, agency and date-derived features.
 
 **Request Body:**
 ```json
 {
-  "flight_duration": 5.5,
-  "distance": 4500.0,
-  "airline": "UA",
-  "departure_hour": 14,
-  "day_of_week": 2,
-  "is_weekend": false,
-  "is_holiday": false,
-  "days_until_departure": 21,
-  "class_type": "economy",
-  "origin_airport": "JFK",
-  "destination_airport": "LAX"
+  "from": "Recife (PE)",
+  "to": "Florianopolis (SC)",
+  "flightType": "firstClass",
+  "agency": "FlyingDrops",
+  "time": 1.76,
+  "distance": 676.53,
+  "flight_year": 2019,
+  "flight_month": 9,
+  "flight_day": 26,
+  "flight_dayofweek": 3
+}
+```
+
+**Fields**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| from | string | Yes | Origin city |
+| to | string | Yes | Destination city |
+| flightType | string | Yes | `firstClass`, `economic`, or `premium` |
+| agency | string | Yes | Travel agency |
+| time | number | Yes | Flight duration (hours, > 0) |
+| distance | number | Yes | Distance (km, > 0) |
+| flight_year | int | Yes | Year |
+| flight_month | int | Yes | Month (1-12) |
+| flight_day | int | Yes | Day (1-31) |
+| flight_dayofweek | int | Yes | Day of week (0=Monday .. 6=Sunday) |
+
+**Response (Success):**
+```json
+{
+  "predicted_price": 451.2988,
+  "model_version": "1.0",
+  "model_name": "flight_price_regression"
+}
+```
+
+**Status Codes:** `200`, `400` (validation), `500` (prediction failed), `503` (model unavailable).
+
+---
+
+## Gender Classification
+
+### GET /api/gender/health
+
+**Response:** `{ "status": "healthy" }`
+
+### POST /api/gender/predict
+
+Classifies a user's gender from their profile.
+
+**Request Body:**
+```json
+{
+  "user name": "Robert Braun",
+  "age": 33,
+  "company": "4You"
 }
 ```
 
 **Response (Success):**
 ```json
 {
-  "predicted_price": 450.75,
-  "model_version": "1.0",
-  "model_name": "flight_price_regression"
+  "gender": "male",
+  "probability": 0.995,
+  "model_version": "1.0"
 }
 ```
 
-**Response (Error):**
-```json
-{
-  "error": "Invalid input data",
-  "field": "departure_hour",
-  "code": "validation_failed"
-}
-```
+`gender` is one of `male`, `female`, `none`.
 
-**Status Codes:**
-- `200` - Success
-- `400` - Invalid input (missing field, invalid value, malformed JSON)
-- `500` - Model prediction failed
-- `503` - Model not available
+**Status Codes:** `200`, `400` (validation), `503` (model unavailable), `500` (prediction failed).
 
 ---
 
-## Request Schema
+## Hotel Recommendation
 
-### FlightPredictionInput
+### GET /api/recommend/health
+
+**Response:** `{ "status": "healthy" }`
+
+### GET /api/recommend/places
+
+Lists all destination cities with hotels in the catalog.
+
+**Response:**
+```json
+{
+  "places": ["Rio de Janeiro (RJ)", "Sao Paulo (SP)", "..."],
+  "total": 9
+}
+```
+
+### POST /api/recommend/recommendations
+
+Returns ranked hotel recommendations for the given preferences. The body may
+be empty (returns general recommendations) or contain any subset of filters.
+
+**Request Body (optional filters):**
+```json
+{
+  "place": "Rio de Janeiro (RJ)",
+  "max_price_per_day": 200,
+  "days": 3,
+  "company": "4You",
+  "top_n": 5
+}
+```
+
+**Fields**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| flight_duration | float | Yes | Duration in hours (must be > 0) |
-| distance | float | Yes | Distance in kilometers (must be > 0) |
-| airline | string | Yes | Airline code (min 1 char) |
-| departure_hour | int | Yes | Hour (0-23) |
-| day_of_week | int | Yes | Day (0-6) |
-| is_weekend | bool | No | Weekend flag (default: false) |
-| is_holiday | bool | No | Holiday flag (default: false) |
-| days_until_departure | int | Yes | Days until departure (must be > 0) |
-| class_type | string | Yes | One of: economy, business, first |
-| origin_airport | string | Yes | Origin airport code (3-4 chars) |
-| destination_airport | string | Yes | Destination airport code (3-4 chars) |
+| place | string | No | Destination city |
+| max_price_per_day | number | No | Maximum price per night (> 0) |
+| days | int | No | Length of stay (1-30); used to compute total cost |
+| company | string | No | User's company (personalisation) |
+| top_n | int | No | Number of results (default 5, 1-20) |
+
+**Response (Success):**
+```json
+{
+  "recommendations": [
+    {
+      "hotel_name": "Hotel CB",
+      "place": "Rio de Janeiro (RJ)",
+      "price_per_day": 165.99,
+      "total_cost": 497.97,
+      "score": 81.0,
+      "reason": "Exact place match"
+    }
+  ],
+  "total": 1,
+  "filters": { "place": "Rio de Janeiro (RJ)" }
+}
+```
+
+**Status Codes:** `200`, `400` (validation), `503` (catalog unavailable), `500` (recommendation failed).
 
 ---
 
 ## Error Responses
 
-### 400 Bad Request - Validation Error
-
 ```json
-{
-  "error": "Invalid input data",
-  "field": "departure_hour",
-  "code": "validation_failed"
-}
+{ "error": "Invalid input data", "field": "flight_type", "code": "validation_failed" }
+{ "error": "Invalid JSON payload", "code": "invalid_json" }
+{ "error": "Prediction failed", "code": "prediction_failed" }
 ```
-
-### 400 Bad Request - Invalid JSON
-
-```json
-{
-  "error": "Invalid JSON payload",
-  "code": "invalid_json"
-}
-```
-
-### 503 Service Unavailable - Model Not Found
-
-```json
-{
-  "error": "Model artifact not found",
-  "code": "model_unavailable"
-}
-```
-
-### 500 Internal Server Error
-
-```json
-{
-  "error": "Prediction failed",
-  "code": "prediction_failed"
-}
-```
-
----
 
 ## Example cURL Commands
 
-### Health Check
 ```bash
-curl http://localhost:5000/api/health
-```
-
-### Get Model Info
-```bash
-curl http://localhost:5000/api/model-info
-```
-
-### Make Prediction
-```bash
+# Flight price
 curl -X POST http://localhost:5000/api/predict \
   -H "Content-Type: application/json" \
-  -d '{
-    "flight_duration": 5.5,
-    "distance": 4500.0,
-    "airline": "UA",
-    "departure_hour": 14,
-    "day_of_week": 2,
-    "is_weekend": false,
-    "is_holiday": false,
-    "days_until_departure": 21,
-    "class_type": "economy",
-    "origin_airport": "JFK",
-    "destination_airport": "LAX"
-  }'
+  -d '{"from":"Recife (PE)","to":"Florianopolis (SC)","flightType":"firstClass","agency":"FlyingDrops","time":1.76,"distance":676.53,"flight_year":2019,"flight_month":9,"flight_day":26,"flight_dayofweek":3}'
+
+# Gender
+curl -X POST http://localhost:5000/api/gender/predict \
+  -H "Content-Type: application/json" \
+  -d '{"user name":"Robert Braun","age":33,"company":"4You"}'
+
+# Recommendations
+curl -X POST http://localhost:5000/api/recommend/recommendations \
+  -H "Content-Type: application/json" \
+  -d '{"place":"Rio de Janeiro (RJ)","days":3,"top_n":5}'
 ```

@@ -46,6 +46,26 @@ python mlflow/tracking.py \
   --run-name "model_v1_training"
 ```
 
+### Tracking All Models
+
+`scripts/track_models.py` logs and registers every model family (flight price,
+gender) plus makes the recommendation catalog available to MLflow:
+
+```bash
+python scripts/track_models.py                 # every model
+python scripts/track_models.py --model flight  # just one family
+```
+
+Registered model names: `voyage_flight_price`, `voyage_gender`.
+
+> **Known caveat:** the repository contains a local package named `mlflow/`.
+> When running from the project root, Python resolves `import mlflow` to this
+> local package instead of the official PyPI library, and the real `mlflow`
+> package is also not installed by default. Install the official library
+> (`pip install mlflow`) and run tracking scripts from a directory where this
+> project's `mlflow/` folder is not first on `sys.path` (or rename the local
+> package) to register models successfully.
+
 ### Using the ModelTracker Class
 
 ```python
