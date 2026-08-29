@@ -6,7 +6,7 @@ Voyage Analytics is an MLOps capstone that productionizes three ML services for
 a travel platform. It trains models from the `flights.csv`, `hotels.csv` and
 `users.csv` datasets, exposes them through a single Flask REST API, tracks them
 with MLflow, and ships them via Docker and Kubernetes — all fronted by an
-interactive Streamlit dashboard.
+interactive Streamlit dashboard..
 
 ---
 
