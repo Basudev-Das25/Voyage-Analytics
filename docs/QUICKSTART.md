@@ -53,13 +53,12 @@ docker run -p 5000:5000 \
 # MLflow
 
 ```bash
-# Start MLflow server
-mlflow server --host 0.0.0.0 --port 5000
+# Start MLflow server (port 5001, avoids API port 5000)
+docker compose -f docker/docker-compose.mlflow.yml up -d
+export MLFLOW_TRACKING_URI=http://localhost:5001
 
-# Track model
-python mlflow/tracking.py \
-  --model-path artifacts/flight_price_pipeline.joblib \
-  --metrics-path artifacts/metrics.json
+# Track all models
+python scripts/track_models.py
 ```
 
 # Kubernetes

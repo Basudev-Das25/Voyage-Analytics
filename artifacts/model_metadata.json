@@ -1,0 +1,13 @@
+{
+  "model_name": "voyage_gender",
+  "model_version": "1.0",
+  "algorithm": "RandomForestClassifier",
+  "framework": "scikit-learn",
+  "task": "classification",
+  "data_path": "artifacts/data/users.csv",
+  "classes": [
+    "female",
+    "male",
+    "none"
+  ]
+}

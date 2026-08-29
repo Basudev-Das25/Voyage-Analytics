@@ -25,6 +25,7 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import joblib
+import json
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
@@ -98,14 +99,40 @@ def main():
     pipeline.fit(X_train, y_train)
 
     y_pred = pipeline.predict(X_test)
-    print(f"\nAccuracy: {accuracy_score(y_test, y_pred):.4f}")
-    print(f"F1 (macro): {f1_score(y_test, y_pred, average='macro'):.4f}")
+    acc = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred, average="macro")
+    print(f"\nAccuracy: {acc:.4f}")
+    print(f"F1 (macro): {f1:.4f}")
     print("\nClassification report:")
     print(classification_report(y_test, y_pred))
 
     os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
     joblib.dump(pipeline, args.output)
     print(f"\nSaved model artifact to: {args.output}")
+
+    # Emit metrics + metadata for MLflow tracking.
+    out_dir = os.path.dirname(args.output) or "."
+    metrics = {
+        "accuracy": round(acc, 4),
+        "f1_macro": round(f1, 4),
+        "n_samples": int(len(users)),
+    }
+    with open(os.path.join(out_dir, "metrics.json"), "w", encoding="utf-8") as f:
+        json.dump(metrics, f, indent=2)
+    print(f"Wrote metrics to: {os.path.join(out_dir, 'metrics.json')}")
+
+    metadata = {
+        "model_name": "voyage_gender",
+        "model_version": "1.0",
+        "algorithm": "RandomForestClassifier",
+        "framework": "scikit-learn",
+        "task": "classification",
+        "data_path": args.data_path,
+        "classes": sorted(pipeline.classes_),
+    }
+    with open(os.path.join(out_dir, "model_metadata.json"), "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2)
+    print(f"Wrote metadata to: {os.path.join(out_dir, 'model_metadata.json')}")
 
 
 if __name__ == "__main__":

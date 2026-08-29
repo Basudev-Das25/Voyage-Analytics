@@ -1,0 +1,5 @@
+{
+  "accuracy": 0.5224,
+  "f1_macro": 0.5217,
+  "n_samples": 1340
+}

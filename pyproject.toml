@@ -22,6 +22,9 @@ dashboard = [
     "streamlit>=1.36.0",
     "requests>=2.32.0",
 ]
+mlops = [
+    "mlflow>=2.15.0",
+]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",

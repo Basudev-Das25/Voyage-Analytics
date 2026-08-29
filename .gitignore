@@ -48,5 +48,10 @@ docker-compose.override.yml
 htmlcov/
 .tox/
 
+# MLflow local tracking stores (created when using file:/sqlite backends)
+mlruns/
+mlflow.db
+mlflow_test.db
+
 # Artifact (model will be here)
 artifacts/flight_price_pipeline.joblib

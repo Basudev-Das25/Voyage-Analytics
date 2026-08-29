@@ -72,7 +72,7 @@ validate_artifact = BashOperator(
 # Task 2: Register model with MLflow
 register_model = PythonOperator(
     task_id="register_model",
-    python_callable=lambda: __import__("mlflow.tracking", fromlist=["ModelTracker"]).ModelTracker().log_model("{{ var.value.MODEL_PATH|default('artifacts/flight_price_pipeline.joblib') }}", registered=True),
+    python_callable=lambda: __import__("mlflow_tracking.tracking", fromlist=["ModelTracker"]).ModelTracker().log_model("{{ var.value.MODEL_PATH|default('artifacts/flight_price_pipeline.joblib') }}", registered=True),
     dag=dag,
 )
 

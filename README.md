@@ -131,14 +131,22 @@ it at `MODEL_PATH` (default `artifacts/flight_price_pipeline.joblib`).
 
 ## MLflow Tracking
 
-Track and register all models with MLflow (requires a running MLflow server):
+Track, log and register all models with MLflow. Start the bundled tracking
+server (port 5001) with Docker:
 
 ```bash
-mlflow server --host 0.0.0.0 --port 5000
+docker compose -f docker/docker-compose.mlflow.yml up -d
+export MLFLOW_TRACKING_URI=http://localhost:5001
+```
+
+Install the tracking dependency and run:
+
+```bash
+pip install -r requirements-dev.txt
 python scripts/track_models.py
 ```
 
-See `mlflow/README.md` for details.
+See `mlflow_tracking/README.md` for details.
 
 ## Docker
 
@@ -170,7 +178,7 @@ voyage-analytics/
 ├── scripts/             # Training / catalog / tracking / utility scripts
 ├── dashboard/           # Streamlit web app
 ├── tests/               # Test suite
-├── mlflow/              # MLflow integration
+├── mlflow_tracking/     # MLflow integration (wraps official mlflow lib)
 ├── docker/              # Docker configuration
 ├── kubernetes/          # Kubernetes manifests
 ├── airflow/             # Orchestration (template)

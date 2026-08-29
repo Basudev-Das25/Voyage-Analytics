@@ -113,7 +113,7 @@ voyage-analytics/
 ├── artifacts/        # Model artifacts (from ML team)
 ├── config/           # Configuration
 ├── scripts/          # Utility scripts
-├── mlflow/           # MLflow integration
+├── mlflow_tracking/  # MLflow integration (wraps official mlflow lib)
 ├── docker/           # Docker configuration
 └── kubernetes/       # Kubernetes manifests
 ```
@@ -184,17 +184,22 @@ mypy src/ api/
 ### Start MLflow Server
 
 ```bash
-# Install MLflow
-pip install mlflow
+# Install the MLflow tracking dependency
+pip install -r requirements-dev.txt
 
-# Start server
-mlflow server --host 0.0.0.0 --port 5000
+# Option A: bundled Docker server on port 5001 (avoids API port 5000)
+docker compose -f docker/docker-compose.mlflow.yml up -d
+export MLFLOW_TRACKING_URI=http://localhost:5001
+
+# Option B: local server directly
+mlflow server --host 0.0.0.0 --port 5001
+export MLFLOW_TRACKING_URI=http://localhost:5001
 ```
 
 ### Track Model
 
 ```bash
-python mlflow/tracking.py \
+python mlflow_tracking/tracking.py \
   --model-path artifacts/flight_price_pipeline.joblib \
   --metrics-path artifacts/metrics.json \
   --metadata-path artifacts/model_metadata.json

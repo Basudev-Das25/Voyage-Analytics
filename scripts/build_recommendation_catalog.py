@@ -98,6 +98,23 @@ def main():
     print(f"  hotels: {len(hotel_catalog)}, places: {len(catalog['places'])}")
     print(f"  companies with preferences: {len(company_prefs)}")
 
+    # Emit metadata alongside the catalog for MLflow tracking.
+    out_dir = os.path.dirname(args.output) or "."
+    metadata = {
+        "model_name": "voyage_recommendation",
+        "model_version": "1.0",
+        "task": "recommendation",
+        "framework": "content-based",
+        "hotels_data_path": args.hotels,
+        "users_data_path": args.users,
+        "n_hotels": len(hotel_catalog),
+        "n_places": len(catalog["places"]),
+        "n_companies": len(company_prefs),
+    }
+    with open(os.path.join(out_dir, "model_metadata.json"), "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2)
+    print(f"Wrote metadata to: {os.path.join(out_dir, 'model_metadata.json')}")
+
 
 if __name__ == "__main__":
     main()

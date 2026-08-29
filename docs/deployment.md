@@ -103,7 +103,7 @@ services:
   mlflow:
     image: mlflow/mlflow:latest
     ports:
-      - "5000:5000"
+      - "5001:5000"
     command: >
       mlflow server
       --host 0.0.0.0
