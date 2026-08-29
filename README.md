@@ -71,7 +71,7 @@ voyage-analytics/
 
 ### 1. Prerequisites
 
-- Python 3.9+ (tested on 3.13)
+- Python **3.10** or **3.11** (recommended for ML; avoids Windows ABI issues seen on 3.13)
 - `pip`
 - Docker (optional — for MLflow server / container deployment)
 - `kubectl` (optional — for Kubernetes)

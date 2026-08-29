@@ -138,14 +138,17 @@ def track_family(name: str) -> dict:
             except Exception as e:
                 print(f"  Could not infer signature for {name}: {e}")
 
-            if cfg["framework"] == "xgboost":
-                mlflow.xgboost.log_model(
-                    model, artifact_path="model", signature=signature
-                )
-            else:
-                mlflow.sklearn.log_model(
-                    model, artifact_path="model", signature=signature
-                )
+            # Both artifacts are sklearn-flavour pickles (the flight model is a
+            # sklearn Pipeline wrapping an XGBRegressor), so they are logged via
+            # the sklearn flavour. Use the classic pickle serialization format
+            # because skops (MLflow's default) cannot serialize an XGBoost
+            # Booster embedded in a Pipeline (RepresenterError).
+            mlflow.sklearn.log_model(
+                model,
+                artifact_path="model",
+                signature=signature,
+                serialization_format="pickle",
+            )
             logged_uri = f"runs:/{mlflow.active_run().info.run_id}/model"
             print(f"  Logged {name} model with MLflow flavour ({cfg['framework']})")
         except Exception as e:

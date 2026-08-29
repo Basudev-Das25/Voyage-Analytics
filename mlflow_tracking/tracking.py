@@ -78,6 +78,7 @@ class ModelTracker:
         artifact_path: str = "model",
         registered: bool = True,
         sample_input: Optional[Any] = None,
+        skops_trusted_types: Optional[list] = None,
     ) -> Optional[str]:
         """Log and optionally register a serialised model.
 
@@ -88,6 +89,9 @@ class ModelTracker:
             artifact_path: Artifact sub-path within the run.
             registered: Whether to register the model in the Registry.
             sample_input: Optional sample input DataFrame/dict to infer a schema.
+            skops_trusted_types: Optional list of estimator classes to whitelist
+                for the skops-backed sklearn serializer (required for pipelines
+                that wrap non-sklearn estimators such as XGboost).
 
         Returns:
             The registered model URI, or ``None`` if not registered.
@@ -108,8 +112,15 @@ class ModelTracker:
         if framework == "xgboost":
             mlflow.xgboost.log_model(model, artifact_path=artifact_path, signature=signature)
         else:
+            # Use the classic pickle serialization format rather than skops. skops
+            # cannot serialize an XGBoost Booster embedded inside a sklearn
+            # Pipeline (RepresenterError); pickle handles it cleanly.
             mlflow.sklearn.log_model(
-                model, artifact_path=artifact_path, signature=signature
+                model,
+                artifact_path=artifact_path,
+                signature=signature,
+                serialization_format="pickle",
+                skops_trusted_types=skops_trusted_types,
             )
 
         logger.info("Model logged under artifact path: %s", artifact_path)

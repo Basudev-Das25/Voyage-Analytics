@@ -1,4 +1,8 @@
 # Voyage Analytics Production Layer Dependencies
+#
+# Recommended runtime: **Python 3.10 / 3.11** — the most stable, well-wheeled
+# ML versions. Python 3.13 triggers Windows ABI issues (torch c10.dll reload,
+# pyarrow source builds, skops<->xgboost serialization), so prefer 3.10/3.11.
 
 # Web framework
 flask==3.0.3
@@ -7,10 +11,10 @@ flask==3.0.3
 joblib==1.4.2
 xgboost==2.0.3
 
-# Machine learning (required by both the flight-price pipeline and the
-# gender classification model). Kept as a lower bound so the bundled model
-# artifact (serialised with an earlier scikit-learn) still loads cleanly.
-scikit-learn>=1.5.0
+# Machine learning (used by the flight-price pipeline and the gender model).
+# Pinned to 1.7.x: verified to log the XGBoost-Pipeline via MLflow's pickle
+# serialization cleanly and to load the bundled artifact without issues.
+scikit-learn==1.7.2
 
 # Validation
 pydantic==2.7.4
