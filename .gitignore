@@ -52,6 +52,3 @@ htmlcov/
 mlruns/
 mlflow.db
 mlflow_test.db
-
-# Artifact (model will be here)
-artifacts/flight_price_pipeline.joblib
