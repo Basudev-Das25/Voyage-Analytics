@@ -11,7 +11,7 @@ This workflow runs automated tests and builds the Docker image for Voyage Analyt
 ## Steps
 
 1. **Checkout code** - Gets the repository
-2. **Setup Python** - Installs Python 3.9
+2. **Setup Python** - Installs Python 3.11
 3. **Install dependencies** - Installs project dependencies
 4. **Run tests** - Executes pytest with coverage
 5. **Build Docker image** - Builds the application container
