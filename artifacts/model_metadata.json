@@ -1,22 +1,11 @@
 {
-  "model_name": "voyage_flight_price",
+  "model_name": "voyage_recommendation",
   "model_version": "1.0",
-  "algorithm": "XGBRegressor",
-  "framework": "xgboost",
-  "task": "regression",
-  "features": [
-    "from",
-    "to",
-    "flightType",
-    "time",
-    "distance",
-    "agency",
-    "flight_year",
-    "flight_month",
-    "flight_day",
-    "flight_dayofweek"
-  ],
-  "n_estimators": 300,
-  "learning_rate": 0.05,
-  "max_depth": 6
+  "task": "recommendation",
+  "framework": "content-based",
+  "hotels_data_path": "artifacts/data/hotels.csv",
+  "users_data_path": "artifacts/data/users.csv",
+  "n_hotels": 9,
+  "n_places": 9,
+  "n_companies": 5
 }

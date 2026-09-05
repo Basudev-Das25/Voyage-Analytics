@@ -132,7 +132,11 @@ class RecommendationService:
             }
             for name, meta in catalog.data["hotels"].items()
         ]
-
+        
+        # Filter hotels by place if specified - place is priority filter
+        if req.place:
+            hotels = [h for h in hotels if h["place"].lower() == req.place.lower()]
+        
         results: List[Dict[str, Any]] = []
         for hotel in hotels:
             score, reason = cls._score_hotel(
@@ -159,7 +163,13 @@ class RecommendationService:
         # Rank by score desc, tie-break by price asc.
         results.sort(key=lambda r: (-r["score"], r["price_per_day"]))
 
-        top = results[: req.top_n]
+        # Return ALL matching hotels (not limited to top_n when filtering by place)
+        # top_n is only used when no place filter is specified
+        if req.place:
+            top = results  # Return all matching hotels
+        else:
+            top = results[: req.top_n]
+            
         recommendations = [HotelRecommendation(**r) for r in top]
 
         return RecommendationResponse(

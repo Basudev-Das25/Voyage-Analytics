@@ -7,6 +7,7 @@ from flask import Blueprint, jsonify, request, Response
 
 from src.schemas.recommendation import RecommendationRequest, RecommendationResponse
 from src.services.recommendation_service import RecommendationService
+from src.services.location_search_service import get_location_search_service
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,30 @@ def list_places() -> Response:
             "Recommendation catalog unavailable",
             code="catalog_unavailable",
             status=503,
+        )
+
+
+@recommend_bp.route("/places/search", methods=["GET"])
+def search_places() -> Response:
+    """Search places matching user input with fuzzy matching using inverted index."""
+    query = request.args.get("q", "").strip().lower()
+    if not query:
+        return _error("Missing query parameter 'q'", code="missing_query", status=400)
+    
+    try:
+        search_service = get_location_search_service()
+        matches = search_service.search(query, top_n=5)
+        
+        if matches:
+            return _json({"matches": matches, "found": True})
+        else:
+            return _json({"matches": [], "found": False, "message": "not in database"})
+    except Exception as e:
+        logger.error("Failed to search places: %s", e)
+        return _error(
+            "Failed to search places",
+            code="search_failed",
+            status=500,
         )
 
 

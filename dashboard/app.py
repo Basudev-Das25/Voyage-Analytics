@@ -1,4 +1,4 @@
-"""
+﻿"""
 Voyage Analytics Streamlit Dashboard
 """
 
@@ -6,12 +6,16 @@ import os
 import json
 from textwrap import dedent
 from typing import Optional
+from streamlit_javascript import st_javascript
+from pathlib import Path
 
 import pandas as pd
 import requests
 import streamlit as st
 import matplotlib.pyplot as plt
 
+
+LOGO_PATH = Path(__file__).resolve().parent.parent / "assets" / "va_logo.png"
 
 # =============================================================================
 # CONFIGURATION
@@ -40,7 +44,7 @@ CATALOG_PATH = os.getenv(
 
 st.set_page_config(
     page_title="Voyage Analytics",
-    page_icon="✈️",
+    page_icon="Γ£ê∩╕Å",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -101,12 +105,12 @@ st.markdown(
             rgba(47, 128, 255, 0.07),
             transparent 30%
         ),
-        #050a14 !important;
+        #0A1628 !important;
     color: var(--text);
 }
 
 [data-testid="stAppViewContainer"] {
-    background: #050a14 !important;
+    background: #0A1628 !important;
 }
 
 [data-testid="stHeader"] {
@@ -121,7 +125,7 @@ st.markdown(
     visibility: hidden;
 }
 
-/* Main dashboard — use only the main content container. */
+/* Main dashboard ΓÇö use only the main content container. */
 section.main > div.block-container,
 section[data-testid="stMain"] > div.block-container {
     max-width: none !important;
@@ -149,20 +153,22 @@ p, label, span {
 /* -------------------------------------------------------------------------- */
 
 section[data-testid="stSidebar"] {
-    background:
-        linear-gradient(
-            180deg,
-            #071020 0%,
-            #050b17 100%
-        ) !important;
+    background: #0A1628 !important;
 
     border-right: 1px solid #172941 !important;
 }
 
-section[data-testid="stSidebar"] {
-    /* Start at roughly one quarter of the viewport, while keeping
-       Streamlit's native resize behavior available. */
+section[data-testid="stSidebar"][aria-expanded="true"] {
+    width: 25vw !important;
     min-width: 25vw !important;
+    max-width: 25vw !important;
+    flex: 0 0 25vw !important;
+}
+
+section[data-testid="stSidebar"][aria-expanded="false"] {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
 }
 
 section[data-testid="stSidebar"] > div {
@@ -202,21 +208,23 @@ section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
     width: 58px;
     height: 58px;
     border-radius: 16px;
+    overflow: hidden;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    background:
-        linear-gradient(
-            135deg,
-            #2f80ff,
-            #5b3ff5
-        );
+    box-shadow:
+        0 0 18px rgba(47, 128, 255, 0.45),
+        0 0 35px rgba(91, 63, 245, 0.20);
+}
 
-    color: white;
-    font-size: 25px;
-    font-weight: 900;
+.va-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
 
     box-shadow:
         0 0 18px rgba(47, 128, 255, 0.45),
@@ -743,6 +751,144 @@ pre {
     border-radius: 10px;
 }
 
+
+/* ============================================================
+   CONTENT PROPORTIONS — FINAL POLISH
+   ============================================================ */
+
+/* Keep the dashboard content visually compact */
+section.main > div.block-container,
+section[data-testid="stMain"] > div.block-container {
+    max-width: 1180px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 28px !important;
+    padding-right: 28px !important;
+}
+
+/* Hero */
+.hero-card {
+    width: 100% !important;
+    max-width: 1180px !important;
+    padding: 28px 32px !important;
+    margin-bottom: 28px !important;
+}
+
+.hero-title {
+    font-size: 38px !important;
+}
+
+.hero-subtitle {
+    font-size: 15px !important;
+}
+
+/* Page headings */
+.page-title {
+    font-size: 32px !important;
+}
+
+.page-subtitle {
+    font-size: 14px !important;
+    margin-bottom: 22px !important;
+}
+
+/* Metric cards — less bulky */
+.metric-card {
+    min-height: 125px !important;
+    padding: 20px 22px !important;
+}
+
+.metric-label {
+    font-size: 12px !important;
+    margin-bottom: 10px !important;
+}
+
+.metric-value {
+    font-size: 27px !important;
+}
+
+/* Result cards */
+.result-card {
+    padding: 24px 28px !important;
+}
+
+/* Inputs should not feel oversized */
+div[data-baseweb="input"] input,
+div[data-baseweb="select"] {
+    font-size: 14px !important;
+}
+
+/* Sidebar should feel like one continuous surface */
+section[data-testid="stSidebar"] > div,
+section[data-testid="stSidebar"] [data-testid="stSidebarContent"],
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"],
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] > div,
+section[data-testid="stSidebar"] [data-testid="stSidebarContent"] > div {
+    background: transparent !important;
+}
+
+/* Remove the "nested box" feeling */
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
+    padding: 0 12px !important;
+}
+
+/* Sidebar branding */
+.sidebar-brand {
+    margin-top: 4px !important;
+    margin-bottom: 22px !important;
+}
+
+/* Navigation */
+.nav-label {
+    margin-top: 10px !important;
+    margin-bottom: 8px !important;
+}
+
+section[data-testid="stSidebar"] div.stButton > button {
+    min-height: 46px !important;
+    font-size: 13px !important;
+}
+
+/* Sidebar status */
+.sidebar-status {
+    margin-top: 28px !important;
+    padding-top: 15px !important;
+}
+
+
+/* FINAL CONTENT PROPORTIONS */
+.hero-card {
+    max-width: 1180px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 28px 32px !important;
+}
+
+.metric-card {
+    min-height: 125px !important;
+    padding: 20px 22px !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
+    padding: 0 12px !important;
+}
+
+
+/* Match the outer Streamlit page background */
+html,
+body,
+#root {
+    background: #0A1628 !important;
+}
+
+[data-testid="stAppViewContainer"] {
+    background: #0A1628 !important;
+}
+
+[data-testid="stHeader"] {
+    background: #0A1628 !important;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -964,21 +1110,22 @@ with st.sidebar:
         st.session_state.page = "Flight Price Predictor"
 
 
-    render_html(
-        """
-        <div class="sidebar-brand">
-            <div class="va-logo">VA</div>
-            <div>
-                <div class="sidebar-brand-title">
-                    Voyage Analytics
-                </div>
-                <div class="sidebar-brand-subtitle">
-                    Travel Intelligence Platform
-                </div>
-            </div>
-        </div>
-        """
+    st.markdown('<div class="sidebar-brand">', unsafe_allow_html=True)
+
+    st.image(
+        str(LOGO_PATH),
+        width=58,
     )
+
+    st.markdown(
+        """
+        <div class="brand-name">Voyage Analytics</div>
+        <div class="brand-subtitle">Travel Intelligence Platform</div>
+        """,
+    unsafe_allow_html=True,
+    )
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
     render_html(
@@ -991,28 +1138,28 @@ with st.sidebar:
 
 
     if st.button(
-        "✈️  Flight Price Predictor",
+        "Flight Price Predictor",
         use_container_width=True,
     ):
         st.session_state.page = "Flight Price Predictor"
 
 
     if st.button(
-        "👤  Gender Classifier",
+        "Gender Classifier",
         use_container_width=True,
     ):
         st.session_state.page = "Gender Classifier"
 
 
     if st.button(
-        "🏨  Hotel Recommender",
+        "Hotel Recommender",
         use_container_width=True,
     ):
         st.session_state.page = "Hotel Recommender"
 
 
     if st.button(
-        "📊  Insights & Analytics",
+        "Insights & Analytics",
         use_container_width=True,
     ):
         st.session_state.page = "Insights"
@@ -1086,7 +1233,7 @@ render_html(
 
 
 # =============================================================================
-# PAGE 1 — FLIGHT PRICE PREDICTOR
+# PAGE 1 FLIGHT PRICE PREDICTOR
 # =============================================================================
 
 if page == "Flight Price Predictor":
@@ -1094,7 +1241,7 @@ if page == "Flight Price Predictor":
     render_html(
         """
         <div class="page-title">
-            ✈️ Flight Price Predictor
+            Flight Price Predictor
         </div>
 
         <div class="page-subtitle">
@@ -1195,7 +1342,7 @@ if page == "Flight Price Predictor":
 
                 render_html(
                     f"""
-                    <div class="result-card">
+                    <div id="flight-result" class="result-card">
 
                         <div class="result-title">
                             Estimated Flight Price
@@ -1208,7 +1355,7 @@ if page == "Flight Price Predictor":
                     </div>
                     """
                 )
-
+                
             else:
 
                 st.error(
@@ -1223,7 +1370,7 @@ if page == "Flight Price Predictor":
 
 
 # =============================================================================
-# PAGE 2 — GENDER CLASSIFIER
+# PAGE 2 GENDER CLASSIFIER
 # =============================================================================
 
 elif page == "Gender Classifier":
@@ -1231,7 +1378,7 @@ elif page == "Gender Classifier":
     render_html(
         """
         <div class="page-title">
-            👤 Gender Classifier
+            Gender Classifier
         </div>
 
         <div class="page-subtitle">
@@ -1328,7 +1475,7 @@ elif page == "Gender Classifier":
 
 
 # =============================================================================
-# PAGE 3 — HOTEL RECOMMENDER
+# PAGE 3 HOTEL RECOMMENDER
 # =============================================================================
 
 elif page == "Hotel Recommender":
@@ -1336,7 +1483,7 @@ elif page == "Hotel Recommender":
     render_html(
         """
         <div class="page-title">
-            🏨 Hotel Recommender
+            Hotel Recommender
         </div>
 
         <div class="page-subtitle">
@@ -1449,7 +1596,7 @@ elif page == "Hotel Recommender":
                     ):
 
                         total = (
-                            f" · Total for stay: "
+                            f" ┬╖ Total for stay: "
                             f"${recommendation['total_cost']:,.2f}"
                         )
 
@@ -1473,7 +1620,7 @@ elif page == "Hotel Recommender":
                                 font-size:13px;
                             ">
                                 {recommendation['place']}
-                                ·
+                                ┬╖
                                 ${recommendation['price_per_day']:,.2f}/night
                                 {total}
                             </div>
@@ -1506,7 +1653,7 @@ elif page == "Hotel Recommender":
 
 
 # =============================================================================
-# PAGE 4 — INSIGHTS & ANALYTICS
+# PAGE 4 INSIGHTS & ANALYTICS
 # =============================================================================
 
 else:
@@ -1517,7 +1664,7 @@ else:
     render_html(
         """
         <div class="page-title">
-            📊 Insights & Analytics
+            Insights & Analytics
         </div>
 
         <div class="page-subtitle">
@@ -1643,7 +1790,7 @@ else:
 
 
         # ---------------------------------------------------------------------
-        # ROW 1 — PRICE BY DESTINATION
+        # ROW 1 ΓÇö PRICE BY DESTINATION
         # ---------------------------------------------------------------------
 
         destination_prices = (
@@ -1690,7 +1837,7 @@ else:
 
 
         # ---------------------------------------------------------------------
-        # ROW 2 — HOTEL PRICE + GENDER
+        # ROW 2 ΓÇö HOTEL PRICE + GENDER
         # ---------------------------------------------------------------------
 
         left_col, right_col = st.columns(
@@ -1924,7 +2071,7 @@ else:
 
         # ---------------------------------------------------------------------
         # ---------------------------------------------------------------------
-        # ROW 3 — BOOKINGS BY DESTINATION
+        # ROW 3 ΓÇö BOOKINGS BY DESTINATION
         # ---------------------------------------------------------------------
 
 
@@ -2031,11 +2178,12 @@ else:
         plt.close(fig5)
 
 
-    # ---------------------------------------------------------------------        # DATASET PREVIEW
-        # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------   
+    #      # DATASET PREVIEW
+    # ---------------------------------------------------------------------
 
         with st.expander(
-            "🗄️ Dataset Preview"
+            "Dataset Preview"
         ):
 
             render_html(
