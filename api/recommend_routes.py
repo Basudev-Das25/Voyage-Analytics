@@ -7,6 +7,7 @@ from flask import Blueprint, jsonify, request, Response
 
 from src.schemas.recommendation import RecommendationRequest, RecommendationResponse
 from src.services.recommendation_service import RecommendationService
+from src.services.location_search_service import get_location_search_service
 
 logger = logging.getLogger(__name__)
 
@@ -53,17 +54,14 @@ def list_places() -> Response:
 
 @recommend_bp.route("/places/search", methods=["GET"])
 def search_places() -> Response:
-    """Search places matching user input. Returns matching place or 'not in database'."""
+    """Search places matching user input with fuzzy matching using inverted index."""
     query = request.args.get("q", "").strip().lower()
     if not query:
         return _error("Missing query parameter 'q'", code="missing_query", status=400)
     
     try:
-        catalog = RecommendationService._catalog()
-        places = catalog.data.get("places", [])
-        
-        # Case-insensitive partial match
-        matches = [p for p in places if query in p.lower()]
+        search_service = get_location_search_service()
+        matches = search_service.search(query, top_n=5)
         
         if matches:
             return _json({"matches": matches, "found": True})

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        * { box-sizing: border-box; }
+        .location-autocomplete {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+        }
+        .location-input {
+            width: 100%;
+            padding: 12px 40px 12px 44px;
+            font-size: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #ffffff;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .location-input:focus {
+            border-color: #1f77b4;
+            box-shadow: 0 0 0 3px rgba(31, 119, 180, 0.15);
+        }
+        .location-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #666;
+        }
+        .location-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 350px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+        .location-dropdown.show {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .location-suggestion {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: background 0.15s;
+        }
+        .location-suggestion:hover,
+        .location-suggestion.highlighted {
+            background: #f0f7ff;
+        }
+        .location-suggestion.highlighted {
+            background: #e6f0ff;
+        }
+        .location-name {
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .location-name .location-icon-small {
+            color: #1f77b4;
+        }
+        .location-context {
+            font-size: 13px;
+            color: #666;
+        }
+        .location-dropdown-header {
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #666;
+            background: #fafafa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .location-empty {
+            padding: 20px 16px;
+            text-align: center;
+            color: #666;
+        }
+        .location-loading {
+            padding: 15px 16px;
+            text-align: center;
+            color: #1f77b4;
+        }
+        .location-loading::before {
+            content: '⏳';
+            margin-right: 8px;
+        }
+        @media (max-width: 600px) {
+            .location-autocomplete {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="location-autocomplete" id="location-autocomplete-{{id}}">
+        <input
+            type="text"
+            class="location-input"
+            id="location-input-{{id}}"
+            placeholder="Search for a location..."
+            aria-label="Search for a location"
+            aria-expanded="false"
+            aria-autocomplete="list"
+            aria-controls="location-dropdown-{{id}}"
+            aria-activedescendant=""
+        >
+        <span class="location-icon">📍</span>
+        
+        <div class="location-dropdown" id="location-dropdown-{{id}}" aria-hidden="true">
+            <div class="location-dropdown-header" id="location-dropdown-header-{{id}}">
+                Suggested locations
+            </div>
+            <div class="location-suggestions-container" id="location-suggestions-{{id}}"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const config = {
+                debounceDelay: 300,
+                minQueryLength: 2,
+                maxSuggestions: 5
+            };
+
+            class LocationAutocomplete {
+                constructor(elementId) {
+                    this.elementId = elementId;
+                    this.container = document.getElementById(`location-autocomplete-${elementId}`);
+                    this.input = document.getElementById(`location-input-${elementId}`);
+                    this.dropdown = document.getElementById(`location-dropdown-${elementId}`);
+                    this.suggestionsContainer = document.getElementById(`location-suggestions-${elementId}`);
+                    this.header = document.getElementById(`location-dropdown-header-${elementId}`);
+                    
+                    this.apiBase = "{{api_base}}";
+                    this.allLocations = [];
+                    this.suggestions = [];
+                    this.selectedIndex = -1;
+                    this.isDropdownOpen = false;
+                    this.debounceTimer = null;
+                    this.currentRequestId = 0;
+
+                    this.init();
+                }
+
+                init() {
+                    // Load all locations on init
+                    this.loadAllLocations();
+
+                    // Event listeners
+                    this.input.addEventListener('focus', () => this.handleFocus());
+                    this.input.addEventListener('blur', () => this.handleBlur());
+                    this.input.addEventListener('input', () => this.handleInput());
+                    this.input.addEventListener('keydown', (e) => this.handleKeydown(e));
+                    document.addEventListener('click', (e) => this.handleClickOutside(e));
+                }
+
+                async loadAllLocations() {
+                    try {
+                        const response = await fetch(`${this.apiBase}/api/recommend/places`);
+                        const data = await response.json();
+                        this.allLocations = data.places || [];
+                    } catch (error) {
+                        console.error('Failed to load locations:', error);
+                    }
+                }
+
+                handleFocus() {
+                    if (this.allLocations.length > 0) {
+                        this.isDropdownOpen = true;
+                        this.dropdown.classList.add('show');
+                        this.dropdown.setAttribute('aria-hidden', 'false');
+                        this.input.setAttribute('aria-expanded', 'true');
+                    }
+                }
+
+                handleBlur() {
+                    setTimeout(() => {
+                        this.isDropdownOpen = false;
+                        this.dropdown.classList.remove('show');
+                        this.dropdown.setAttribute('aria-hidden', 'true');
+                        this.input.setAttribute('aria-expanded', 'false');
+                        this.input.setAttribute('aria-activedescendant', '');
+                        this.selectedIndex = -1;
+                    }, 200);
+                }
+
+                handleClickOutside(e) {
+                    if (!this.container.contains(e.target)) {
+                        this.handleBlur();
+                    }
+                }
+
+                handleInput() {
+                    const query = this.input.value.trim();
+                    
+                    if (query.length < config.minQueryLength) {
+                        this.suggestions = [];
+                        this.showNoResults(false);
+                        return;
+                    }
+
+                    // Clear debounce timer
+                    if (this.debounceTimer) {
+                        clearTimeout(this.debounceTimer);
+                    }
+
+                    // Debounced search
+                    this.debounceTimer = setTimeout(() => {
+                        this.searchLocations(query);
+                    }, config.debounceDelay);
+                }
+
+                async searchLocations(query) {
+                    this.showLoading();
+
+                    // Create unique request ID to handle race conditions
+                    this.currentRequestId++;
+                    const requestId = this.currentRequestId;
+
+                    try {
+                        // Filter locally first
+                        const matches = this.allLocations.filter(location => 
+                            location.toLowerCase().includes(query.toLowerCase())
+                        );
+
+                        // Sort by relevance
+                        const sorted = this.rankByRelevance(matches, query);
+
+                        // Limit suggestions
+                        this.suggestions = sorted.slice(0, config.maxSuggestions);
+
+                        // Only update if this is the latest request
+                        if (requestId === this.currentRequestId) {
+                            this.renderSuggestions();
+                        }
+                    } catch (error) {
+                        console.error('Search failed:', error);
+                        this.showNoResults(true);
+                    }
+                }
+
+                rankByRelevance(locations, query) {
+                    const queryLower = query.toLowerCase();
+                    const queryWords = queryLower.split(/\s+/);
+
+                    return locations.sort((a, b) => {
+                        const aLower = a.toLowerCase();
+                        const bLower = b.toLowerCase();
+
+                        // Exact match gets highest priority
+                        if (aLower === queryLower) return -1;
+                        if (bLower === queryLower) return 1;
+
+                        // Starts with gets high priority
+                        if (aLower.startsWith(queryLower) && !bLower.startsWith(queryLower)) return -1;
+                        if (!aLower.startsWith(queryLower) && bLower.startsWith(queryLower)) return 1;
+
+                        // Partial match with word boundary
+                        const aWordMatch = this.hasWordMatch(aLower, queryWords);
+                        const bWordMatch = this.hasWordMatch(bLower, queryWords);
+                        if (aWordMatch && !bWordMatch) return -1;
+                        if (!aWordMatch && bWordMatch) return 1;
+
+                        // Shorter string (closer match) gets priority
+                        if (a.length < b.length) return -1;
+                        if (a.length > b.length) return 1;
+
+                        // Alphabetical as fallback
+                        return a.localeCompare(b);
+                    });
+                }
+
+                hasWordMatch(location, words) {
+                    return words.every(word => location.includes(word));
+                }
+
+                showLoading() {
+                    this.suggestionsContainer.innerHTML = '<div class="location-loading">Searching locations...</div>';
+                }
+
+                showNoResults(showError) {
+                    if (showError) {
+                        this.suggestionsContainer.innerHTML = '<div class="location-empty">⚠️ Failed to load locations</div>';
+                    } else {
+                        this.suggestionsContainer.innerHTML = '<div class="location-empty">No locations found<br>Try a different search</div>';
+                    }
+                    this.dropdown.classList.add('show');
+                    this.dropdown.setAttribute('aria-hidden', 'false');
+                    this.input.setAttribute('aria-expanded', 'true');
+                    this.isDropdownOpen = true;
+                }
+
+                renderSuggestions() {
+                    if (this.suggestions.length === 0) {
+                        this.showNoResults(false);
+                        return;
+                    }
+
+                    this.suggestionsContainer.innerHTML = '';
+                    
+                    this.suggestions.forEach((suggestion, index) => {
+                        const item = document.createElement('div');
+                        item.className = 'location-suggestion';
+                        item.setAttribute('role', 'option');
+                        item.setAttribute('id', `location-suggestion-${this.elementId}-${index}`);
+                        
+                        if (index === this.selectedIndex) {
+                            item.classList.add('highlighted');
+                            this.input.setAttribute('aria-activedescendant', item.id);
+                        }
+
+                        // Parse location string like "Kolkata (WB), India"
+                        const locationData = this.parseLocation(suggestion);
+                        
+                        item.innerHTML = `
+                            <div class="location-name">
+                                <span class="location-icon-small">📍</span>
+                                ${locationData.city || locationData.name}
+                            </div>
+                            <div class="location-context">
+                                ${locationData.state ? `${locationData.state}, ` : ''}${locationData.country}
+                            </div>
+                        `;
+
+                        item.addEventListener('click', () => this.selectSuggestion(index));
+                        this.suggestionsContainer.appendChild(item);
+                    });
+
+                    this.dropdown.classList.add('show');
+                    this.dropdown.setAttribute('aria-hidden', 'false');
+                    this.input.setAttribute('aria-expanded', 'true');
+                    this.isDropdownOpen = true;
+                }
+
+                parseLocation(locationStr) {
+                    // Parse formats like "Kolkata (WB), India" or "Sao Paulo (SP)"
+                    const parts = locationStr.split(',').map(p => p.trim());
+                    const cityPart = parts[0] || '';
+                    
+                    // Remove parentheses from city name
+                    const city = cityPart.replace(/\([^)]*\)/g, '').trim();
+                    const state = (cityPart.match(/\(([^)]+)\)/) || [])[1] || '';
+                    const country = parts[1] || '';
+
+                    return {
+                        name: locationStr,
+                        city: city,
+                        state: state,
+                        country: country
+                    };
+                }
+
+                selectSuggestion(index) {
+                    if (index >= 0 && index < this.suggestions.length) {
+                        const selected = this.suggestions[index];
+                        this.input.value = selected;
+                        this.input.setAttribute('aria-activedescendant', '');
+                        
+                        // Store the selected location in a hidden input
+                        this.input.dataset.selectedLocation = JSON.stringify({
+                            id: selected,
+                            name: selected,
+                            parsed: this.parseLocation(selected)
+                        });
+
+                        this.handleBlur();
+                        
+                        // Trigger change event for Streamlit to pick up
+                        this.input.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+
+                handleKeydown(e) {
+                    if (!this.isDropdownOpen) {
+                        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                            this.handleFocus();
+                        }
+                        return;
+                    }
+
+                    const suggestionElements = this.suggestionsContainer.querySelectorAll('.location-suggestion');
+                    
+                    switch (e.key) {
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            this.selectedIndex = Math.min(this.selectedIndex + 1, suggestionElements.length - 1);
+                            this.updateHighlight();
+                            break;
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            this.selectedIndex = Math.max(this.selectedIndex - 1, 0);
+                            this.updateHighlight();
+                            break;
+                        case 'Enter':
+                            e.preventDefault();
+                            if (this.selectedIndex >= 0) {
+                                this.selectSuggestion(this.selectedIndex);
+                            }
+                            break;
+                        case 'Escape':
+                            this.handleBlur();
+                            this.input.value = '';
+                            break;
+                        case 'Tab':
+                            this.handleBlur();
+                            break;
+                    }
+                }
+
+                updateHighlight() {
+                    const suggestionElements = this.suggestionsContainer.querySelectorAll('.location-suggestion');
+                    suggestionElements.forEach((el, idx) => {
+                        if (idx === this.selectedIndex) {
+                            el.classList.add('highlighted');
+                            el.scrollIntoView({ block: 'nearest' });
+                        } else {
+                            el.classList.remove('highlighted');
+                        }
+                    });
+                    
+                    if (this.selectedIndex >= 0) {
+                        this.input.setAttribute('aria-activedescendant', `location-suggestion-${this.elementId}-${this.selectedIndex}`);
+                    } else {
+                        this.input.setAttribute('aria-activedescendant', '');
+                    }
+                }
+
+                getSelectedLocation() {
+                    return this.input.dataset.selectedLocation ? 
+                        JSON.parse(this.input.dataset.selectedLocation) : null;
+                }
+            }
+
+            // Initialize on page load
+            window.addEventListener('DOMContentLoaded', () => {
+                // This will be called from Streamlit with the elementId
+                window.initLocationAutocomplete = function(elementId, apiBase) {
+                    return new LocationAutocomplete(elementId);
+                };
+            });
+        })();
+    </script>
+</body>
+</html>
