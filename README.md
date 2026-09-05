@@ -233,16 +233,16 @@ the correct dataset location if using the default dataset folder.
 | `MODEL_PATH` | `artifacts/flight_price_pipeline.joblib` | Flight-price model |
 | `GENDER_MODEL_PATH` | `artifacts/gender_model.joblib` | Gender model |
 | `HOTELS_CATALOG_PATH` | `artifacts/hotel_catalog.json` | Recommendation catalog |
-| `HOTELS_DATA_PATH` | `artifacts/data/hotels.csv` | Hotels dataset (use `travel_capstone dataset/hotels.csv`) |
-| `USERS_DATA_PATH` | `artifacts/data/users.csv` | Users dataset (use `travel_capstone dataset/users.csv`) |
+| `HOTELS_DATA_PATH` | `artifacts/data/hotels.csv` | Hotels dataset |
+| `USERS_DATA_PATH` | `artifacts/data/users.csv` | Users dataset |
 | `MLFLOW_TRACKING_URI` | `http://localhost:5000` | MLflow tracking URI |
 | `MLFLOW_EXPERIMENT_NAME` | `voyage-flight-price` | MLflow experiment |
 | `API_HOST` | `0.0.0.0` | API bind address |
 | `API_PORT` | `5000` | API port |
 
-**Note**: For local development, update `HOTELS_DATA_PATH` and `USERS_DATA_PATH` in `.env` to:
-- `HOTELS_DATA_PATH=C:\path\to\travel_capstone dataset\hotels.csv`
-- `USERS_DATA_PATH=C:\path\to\travel_capstone dataset\users.csv`
+**Note**: The project uses datasets from the `travel_capstone dataset` folder. When setting up, copy or symlink the datasets to `artifacts/data/`:
+- `artifacts/data/hotels.csv` ← `travel_capstone dataset/hotels.csv`
+- `artifacts/data/users.csv` ← `travel_capstone dataset/users.csv`
 
 Full reference: [`config/README.md`](./config/README.md).
 

@@ -23,10 +23,10 @@ class Settings:
 
         # Recommendation engine data
         self.hotels_data_path: str = os.getenv(
-            "HOTELS_DATA_PATH", "C:\\Basudev Das\\Work\\labmerix\\20-08-26\\drive-download-20260820T061619Z-1-001\\travel_capstone dataset\\hotels.csv"
+            "HOTELS_DATA_PATH", "artifacts/data/hotels.csv"
         )
         self.users_data_path: str = os.getenv(
-            "USERS_DATA_PATH", "C:\\Basudev Das\\Work\\labmerix\\20-08-26\\drive-download-20260820T061619Z-1-001\\travel_capstone dataset\\users.csv"
+            "USERS_DATA_PATH", "artifacts/data/users.csv"
         )
         self.hotels_catalog_path: str = os.getenv(
             "HOTELS_CATALOG_PATH", "artifacts/hotel_catalog.json"
