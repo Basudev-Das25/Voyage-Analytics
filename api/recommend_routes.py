@@ -51,6 +51,33 @@ def list_places() -> Response:
         )
 
 
+@recommend_bp.route("/places/search", methods=["GET"])
+def search_places() -> Response:
+    """Search places matching user input. Returns matching place or 'not in database'."""
+    query = request.args.get("q", "").strip().lower()
+    if not query:
+        return _error("Missing query parameter 'q'", code="missing_query", status=400)
+    
+    try:
+        catalog = RecommendationService._catalog()
+        places = catalog.data.get("places", [])
+        
+        # Case-insensitive partial match
+        matches = [p for p in places if query in p.lower()]
+        
+        if matches:
+            return _json({"matches": matches, "found": True})
+        else:
+            return _json({"matches": [], "found": False, "message": "not in database"})
+    except Exception as e:
+        logger.error("Failed to search places: %s", e)
+        return _error(
+            "Failed to search places",
+            code="search_failed",
+            status=500,
+        )
+
+
 @recommend_bp.route("/recommendations", methods=["POST"])
 def get_recommendations() -> Response:
     """Return ranked hotel recommendations for the given preferences."""

@@ -164,11 +164,22 @@ elif page == "Gender Classifier":
 # --------------------------------------------------------------------------- #
 elif page == "Hotel Recommender":
     st.header("Hotel Recommender")
-    places = api_places() if api_ok() else []
+    
+    # Place autocomplete with live search
+    all_places = api_places() if api_ok() else []
+    r_place = st.text_input("Place (type to search)", "")
+    
+    # Filter places as user types
+    if r_place:
+        matches = [p for p in all_places if r_place.lower() in p.lower()]
+        if matches:
+            r_place = st.selectbox("Select a place", matches, key="place_select")
+        elif api_ok():
+            st.warning("Place not in database")
+    
     with st.form("recommend_form"):
         col1, col2 = st.columns(2)
         with col1:
-            r_place = st.selectbox("Place (optional)", ["", *places])
             r_budget = st.number_input("Max price / night", 0.0, 1000.0, 250.0)
         with col2:
             r_days = st.number_input("Nights (optional)", 0, 30, 3)
