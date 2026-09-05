@@ -4,9 +4,9 @@
 
 Voyage Analytics is an MLOps capstone that productionizes three ML services for
 a travel platform. It trains models from the `flights.csv`, `hotels.csv` and
-`users.csv` datasets, exposes them through a single Flask REST API, tracks them
-with MLflow, and ships them via Docker and Kubernetes — all fronted by an
-interactive Streamlit dashboard..
+`users.csv` datasets (from the travel_capstone dataset), exposes them through a
+single Flask REST API, tracks them with MLflow, and ships them via Docker and
+Kubernetes — all fronted by an interactive Streamlit dashboard.
 
 ---
 
@@ -15,6 +15,8 @@ interactive Streamlit dashboard..
 - **Flight price prediction** — XGBoost regression (route, class, agency, date).
 - **Gender classification** — RandomForest classifier trained on `users.csv`.
 - **Hotel recommendation** — content-based engine over the real hotel catalog.
+- **Smart location autocomplete** — fuzzy matching with edit distance for typos
+  and efficient inverted index search.
 - **Streamlit dashboard** — interactive predictor, classifier, recommender and
   data insights.
 - **MLflow tracking & registry** — metrics, params, artifacts and model
@@ -48,19 +50,19 @@ voyage-analytics/
 ├── api/                 # Flask blueprints + endpoint docs
 ├── artifacts/           # Model artifacts, catalog & datasets (data/)
 ├── config/              # Settings (README.md)
+├── dashboard/           # Streamlit web app (README.md)
+│   └── templates/       # HTML templates (if needed)
 ├── src/
 │   ├── features/        # Shared feature engineering
 │   ├── model/           # Model loaders (README.md)
 │   ├── schemas/         # Pydantic schemas (README.md)
-│   └── services/        # Business logic
+│   └── services/        # Business logic + location search
 ├── scripts/             # Training / catalog / tracking scripts (README.md)
-├── dashboard/           # Streamlit web app (README.md)
 ├── tests/               # Test suite
 ├── mlflow_tracking/     # MLflow integration (README.md)
 ├── docker/              # Dockerfile + MLflow compose (README.md)
 ├── kubernetes/          # K8s manifests (README.md)
-├── airflow/             # Orchestration DAG template (README.md)
-└── notebook/            # Training notebook (README.md)
+└── airflow/             # Orchestration DAG template (README.md)
 ```
 
 > A list of known issues / open requirements lives in [`Update.md`](./Update.md).
@@ -71,10 +73,12 @@ voyage-analytics/
 
 ### 1. Prerequisites
 
-- Python **3.10** or **3.11** (recommended for ML; avoids Windows ABI issues seen on 3.13)
+- Python **3.10** or **3.11** (recommended for ML)
 - `pip`
 - Docker (optional — for MLflow server / container deployment)
 - `kubectl` (optional — for Kubernetes)
+
+**For Windows users**: Update dataset paths in `.env` to point to `travel_capstone dataset` folder.
 
 ### 2. Install
 
@@ -114,6 +118,13 @@ pytest
 streamlit run dashboard/app.py
 ```
 
+The dashboard includes:
+
+- **Flight Price Predictor** - Dropdowns for 9 locations with intelligent defaults
+- **Gender Classifier** - User gender prediction
+- **Hotel Recommender** - Smart location search with fuzzy matching (handles typos)
+- **Insights** - Data visualizations and statistics
+
 ---
 
 ## API Endpoints
@@ -127,7 +138,17 @@ streamlit run dashboard/app.py
 | POST | `/api/gender/predict`               | Classify a user's gender |
 | GET  | `/api/recommend/health`             | Recommendation endpoint health |
 | GET  | `/api/recommend/places`             | List destination cities |
+| GET  | `/api/recommend/places/search?q=<query>` | Search places with fuzzy matching |
 | POST | `/api/recommend/recommendations`    | Get hotel recommendations |
+
+### Location Search Features
+
+The `/api/recommend/places/search` endpoint uses:
+
+- **Efficient inverted index** - Fast token-based searching
+- **Fuzzy matching** - Edit distance algorithm to handle typos (e.g., "Brasillia" → "Brasilia")
+- **Relevance ranking** - Exact matches ranked highest
+- **Top 5 results** - Returns only the most relevant matches
 
 Request/response schemas: see [`api/README.md`](./api/README.md).
 
@@ -190,6 +211,19 @@ See [`kubernetes/README.md`](./kubernetes/README.md).
 > The flight-price model is supplied by the ML team and is git-ignored (large
 > binary). Place it at `MODEL_PATH` (`artifacts/flight_price_pipeline.joblib`).
 
+## Dataset
+
+The project uses datasets from the `travel_capstone dataset` folder:
+
+| Dataset | Location | Description |
+|---------|----------|-------------|
+| flights.csv | `travel_capstone dataset/flights.csv` | Flight booking data |
+| hotels.csv | `travel_capstone dataset/hotels.csv` | Hotel booking data (9 locations) |
+| users.csv | `travel_capstone dataset/users.csv` | User data for gender classification |
+
+**Note**: Update `HOTELS_DATA_PATH` and `USERS_DATA_PATH` in `.env` to point to
+the correct dataset location if using the default dataset folder.
+
 ---
 
 ## Configuration
@@ -199,12 +233,16 @@ See [`kubernetes/README.md`](./kubernetes/README.md).
 | `MODEL_PATH` | `artifacts/flight_price_pipeline.joblib` | Flight-price model |
 | `GENDER_MODEL_PATH` | `artifacts/gender_model.joblib` | Gender model |
 | `HOTELS_CATALOG_PATH` | `artifacts/hotel_catalog.json` | Recommendation catalog |
-| `HOTELS_DATA_PATH` | `artifacts/data/hotels.csv` | Hotels dataset |
-| `USERS_DATA_PATH` | `artifacts/data/users.csv` | Users dataset |
+| `HOTELS_DATA_PATH` | `artifacts/data/hotels.csv` | Hotels dataset (use `travel_capstone dataset/hotels.csv`) |
+| `USERS_DATA_PATH` | `artifacts/data/users.csv` | Users dataset (use `travel_capstone dataset/users.csv`) |
 | `MLFLOW_TRACKING_URI` | `http://localhost:5000` | MLflow tracking URI |
 | `MLFLOW_EXPERIMENT_NAME` | `voyage-flight-price` | MLflow experiment |
 | `API_HOST` | `0.0.0.0` | API bind address |
 | `API_PORT` | `5000` | API port |
+
+**Note**: For local development, update `HOTELS_DATA_PATH` and `USERS_DATA_PATH` in `.env` to:
+- `HOTELS_DATA_PATH=C:\path\to\travel_capstone dataset\hotels.csv`
+- `USERS_DATA_PATH=C:\path\to\travel_capstone dataset\users.csv`
 
 Full reference: [`config/README.md`](./config/README.md).
 
