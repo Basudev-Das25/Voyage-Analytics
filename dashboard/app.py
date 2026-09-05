@@ -167,15 +167,37 @@ elif page == "Hotel Recommender":
     
     # Place autocomplete with live search
     all_places = api_places() if api_ok() else []
-    r_place = st.text_input("Place (type to search)", "")
     
-    # Filter places as user types
-    if r_place:
-        matches = [p for p in all_places if r_place.lower() in p.lower()]
+    # Initialize session state for place input
+    if 'place_input' not in st.session_state:
+        st.session_state.place_input = ""
+    
+    # Display matches below the input box
+    place_input = st.text_input("Place (type to search)", st.session_state.place_input, key="place_input_widget")
+    
+    # Update session state when input changes
+    if place_input != st.session_state.place_input:
+        st.session_state.place_input = place_input
+        st.rerun()
+    
+    # Show matches as user types
+    if place_input:
+        matches = [p for p in all_places if place_input.lower() in p.lower()]
         if matches:
-            r_place = st.selectbox("Select a place", matches, key="place_select")
+            st.info(f"Found {len(matches)} match(es):")
+            for match in matches:
+                st.write(f"• {match}")
         elif api_ok():
             st.warning("Place not in database")
+    
+    # Final selection after user confirms
+    if len(matches) == 1:
+        r_place = matches[0]
+        st.success(f"Selected: {r_place}")
+    elif len(matches) > 1:
+        r_place = st.selectbox("Select a place:", matches, key="place_select")
+    else:
+        r_place = None
     
     with st.form("recommend_form"):
         col1, col2 = st.columns(2)
